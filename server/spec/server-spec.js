@@ -8,20 +8,24 @@ const API_URL = 'http://127.0.0.1:3000/classes';
 
 describe('Persistent Node Chat Server', () => {
   const dbConnection = mysql.createConnection({
-    user: 'student',
-    password: 'student',
+    user: 'root',
+    password: '',
     database: 'chat',
   });
 
   beforeAll((done) => {
     dbConnection.connect();
 
-       const tablename = ''; // TODO: fill this out
+    const tablename = 'users'; // TODO: fill this out
+    const tablename2 = 'messages'; // TODO: fill this out
+    const tablename3 = 'rooms'; // TODO: fill this out
 
     /* Empty the db table before all tests so that multiple tests
      * (or repeated runs of the tests)  will not fail when they should be passing
      * or vice versa */
     dbConnection.query(`truncate ${tablename}`, done);
+    dbConnection.query(`truncate ${tablename2}`, done);
+    dbConnection.query(`truncate ${tablename3}`, done);
   }, 6500);
 
   afterAll(() => {
@@ -36,15 +40,15 @@ describe('Persistent Node Chat Server', () => {
     axios.post(`${API_URL}/users`, { username })
       .then(() => {
         // Post a message to the node chat server:
-        return axios.post(`${API_URL}/messages`, { username, message, roomname });
+        return axios.post(`${API_URL}/messages`, { message, username, roomname });
       })
       .then(() => {
         // Now if we look in the database, we should find the posted message there.
 
         /* TODO: You might have to change this test to get all the data from
          * your message table, since this is schema-dependent. */
-        const queryString = 'SELECT * FROM messages';
-        const queryArgs = [];
+        const queryString = 'SELECT * FROM messages WHERE content=? AND username=? AND roomname=?'; // do we need to return just a row or can we return the whole table? since presumably we will only have one row of data after the before() call.
+        const queryArgs = [message, username, roomname];
 
         dbConnection.query(queryString, queryArgs, (err, results) => {
           if (err) {
@@ -54,7 +58,7 @@ describe('Persistent Node Chat Server', () => {
           expect(results.length).toEqual(1);
 
           // TODO: If you don't have a column named text, change this test.
-          expect(results[0].text).toEqual(message);
+          expect(results[0].content).toEqual(message);
           done();
         });
       })
@@ -65,8 +69,8 @@ describe('Persistent Node Chat Server', () => {
 
   it('Should output all messages from the DB', (done) => {
     // Let's insert a message into the db
-       const queryString = '';
-       const queryArgs = [];
+    const queryString = 'SELECT * FROM messages';
+    const queryArgs = [];
     /* TODO: The exact query string and query args to use here
      * depend on the schema you design, so I'll leave them up to you. */
     dbConnection.query(queryString, queryArgs, (err) => {
@@ -78,7 +82,7 @@ describe('Persistent Node Chat Server', () => {
       axios.get(`${API_URL}/messages`)
         .then((response) => {
           const messageLog = response.data;
-          expect(messageLog[0].text).toEqual(message);
+          expect(messageLog[0].content).toEqual(message);
           expect(messageLog[0].roomname).toEqual(roomname);
           done();
         })
