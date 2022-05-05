@@ -1,4 +1,5 @@
 var mysql = require('mysql2');
+var Promise = require('bluebird'); // maybe don't need
 
 // Create a database connection and export it from this file.
 // Confirm that the credentials supplied for the connection are correct.
@@ -19,6 +20,18 @@ const dbConnection = mysql.createConnection({
 
 dbConnection.connect();
 
+const dbQuery = (...args) => {
+  return new Promise((resolve, request) => {
+    dbConnection.query(...args, (err, ...data) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data);
+      }
+    });
+  });
+};
+
 module.exports = {
-  dbConnection, API_URL
+  dbConnection, API_URL, dbQuery
 };

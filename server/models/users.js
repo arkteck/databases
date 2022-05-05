@@ -3,25 +3,38 @@ var db = require('../db');
 module.exports = {
   getAll: function () {
     let queryString = 'SELECT username FROM users';
-    db.dbConnection.query(queryString, (err, results) => {
-      if (err) {
+    return db.dbQuery(queryString)
+      .then(data => {
+        console.log('users getall', data[0]);
+        let userArray = [];
+        data[0].forEach(user => {
+          userArray.push(user.username);
+        });
+        return userArray;
+      }).catch(err => {
         throw err;
-      } else {
-        console.log(`inside users getAll ${results}`);
-        return results;
-      }
-    });
+      });
   },
 
   create: function (username, password) {
-    let queryString = 'INSERT INTO users (username, password) VALUES (?, ?)';
-    let queryArgs = [username, password];
-    db.dbConnection.query(queryString, queryArgs, (err, results) => {
-      if (err) {
+
+    return this.getAll()
+      .then(data => {
+        if (data.includes(username)) {
+          console.log('user ' + username + ' already exists');
+        } else {
+
+          let queryString = 'INSERT INTO users (username, password) VALUES (?, ?)';
+          let queryArgs = [username, password];
+          return db.dbQuery(queryString, queryArgs)
+            .then(data => {
+              console.log('users models create', data[0]);
+            }).catch(err => {
+              throw err;
+            });
+        }
+      }).catch(err => {
         throw err;
-      } else {
-        console.log('users create', results);
-      }
-    });
+      });
   }
 };

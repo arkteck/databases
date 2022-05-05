@@ -69,26 +69,105 @@ describe('Persistent Node Chat Server', () => {
 
   it('Should output all messages from the DB', (done) => {
     // Let's insert a message into the db
-    const queryString = 'SELECT * FROM messages';
-    const queryArgs = [];
+    const username = 'Huckleberry';
+    const message = 'Jim!';
+    const roomname = 'Comeback';
     /* TODO: The exact query string and query args to use here
-     * depend on the schema you design, so I'll leave them up to you. */
-    dbConnection.query(queryString, queryArgs, (err) => {
-      if (err) {
-        throw err;
-      }
+    * depend on the schema you design, so I'll leave them up to you. */
 
-      // Now query the Node chat server and see if it returns the message we just inserted:
-      axios.get(`${API_URL}/messages`)
-        .then((response) => {
-          const messageLog = response.data;
-          expect(messageLog[0].content).toEqual(message);
-          expect(messageLog[0].roomname).toEqual(roomname);
-          done();
-        })
-        .catch((err) => {
-          throw err;
+    axios.post(`${API_URL}/users`, { username })
+      .then(() => {
+        // Post a message to the node chat server:
+        return axios.post(`${API_URL}/messages`, { message, username, roomname });
+      })
+      .then(() => {
+
+        const queryString = 'SELECT * FROM messages';
+        const queryArgs = [];
+        dbConnection.query(queryString, (err) => {
+          if (err) {
+            throw err;
+          }
+
+          // Now query the Node chat server and see if it returns the message we just inserted:
+          axios.get(`${API_URL}/messages`)
+            .then((response) => {
+              const messageLog = response.data;
+              console.log('messageLog', messageLog);
+              expect(messageLog[messageLog.length - 1].content).toEqual(message);
+              expect(messageLog[messageLog.length - 1].roomname).toEqual(roomname);
+              done();
+            })
+            .catch((err) => {
+              throw err;
+            });
         });
-    });
+      });
   });
+
+  it('JOY TEST', (done) => {
+    // Let's insert a message into the db
+    const username = 'Huckleberry';
+    const message = 'I love Mark Twain';
+    const roomname = 'Hello';
+    /* TODO: The exact query string and query args to use here
+    * depend on the schema you design, so I'll leave them up to you. */
+
+    axios.post(`${API_URL}/users`, { username })
+      .then(() => {
+        // Post a message to the node chat server:
+        return axios.post(`${API_URL}/messages`, { message, username, roomname });
+      })
+      .then(() => {
+
+        const queryString = 'SELECT username FROM users';
+        // const queryArgs = [];
+        dbConnection.query(queryString, (err) => {
+          if (err) {
+            throw err;
+          }
+
+          // Now query the Node chat server and see if it returns the message we just inserted:
+          axios.get(`${API_URL}/users`)
+            .then((response) => {
+              const messageLog = response.data;
+              console.log('messageLog', messageLog);
+              var counter = 0;
+              for (var i = 0; i < messageLog.length; i++) {
+                if (messageLog[i] === username) {
+                  counter++;
+                }
+              }
+              expect(counter).toEqual(1);
+              done();
+            })
+            .catch((err) => {
+              throw err;
+            });
+        });
+      });
+  });
+
+
+  it('Should add username to database from message post if username does not exist', (done) => {
+    // Let's insert a message into the db
+    const username = 'CaptainNemo';
+    const message = 'That\'s a big fish!';
+    const roomname = 'UnderTheSea';
+    /* TODO: The exact query string and query args to use here
+    * depend on the schema you design, so I'll leave them up to you. */
+    // Post a message to the node chat server:
+    axios.post(`${API_URL}/messages`, { message, username, roomname })
+      .then(() => {
+        return axios.get(`${API_URL}/users`);
+      }).then((response) => {
+        expect(response.data.includes(username)).toEqual(true);
+        done();
+      }).catch((err) => {
+        throw err;
+      });
+
+  });
+
+
 });
