@@ -10,3 +10,15 @@ var mysql = require('mysql2');
 // user: 'root', password: 'some_password_you_created_at_install'
 
 
+const API_URL = 'http://127.0.0.1:3000/classes';
+const dbConnection = mysql.createConnection({
+  user: 'root',
+  password: '',
+  database: 'chat',
+});
+
+dbConnection.connect();
+
+module.exports = {
+  dbConnection, API_URL
+};
